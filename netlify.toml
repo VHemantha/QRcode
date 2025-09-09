@@ -1,0 +1,9 @@
+[build]
+  functions = "functions"
+  publish = "public"
+
+[build.environment]
+  FLASK_APP = "handler.py"
+
+[functions]
+  directory = "functions"
