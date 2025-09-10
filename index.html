@@ -386,7 +386,7 @@
             }
             
             // Create the URL with equipment ID parameter
-            const baseUrl = `https://heartfelt-tapioca-f2a113.netlify.app/`
+            const baseUrl = window.location.origin + window.location.pathname;
             const qrUrl = `${baseUrl}?equipment_id=${encodeURIComponent(equipmentId)}`;
             
             if (selectedMethod === 'online') {
