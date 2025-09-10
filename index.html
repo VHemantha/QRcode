@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipment QR System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .qr-display {
+            text-align: center;
+            margin-top: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            border: 2px dashed #cbd5e0;
+        }
+
+        .qr-display img {
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+        }
+
+        .qr-display canvas {
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .config-section {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .qr-methods {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .method-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #4a5568;
+            font-weight: 600;
+        }
+
+        .method-btn.active {
+            background: rgba(102, 126, 234, 0.8);
+            border-color: #667eea;
+            color: white;
+        }
+
+        .equipment-info {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: #2d3748;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .redirect-info {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .countdown {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🔧 Equipment QR Generator</h1>
+            
+            <!-- QR Generator Section -->
+            <div id="generator-section">
+                <h2>📱 Generate QR Code</h2>
+                
+                <div class="config-section">
+                    <div class="form-group">
+                        <label for="equipment_id">Equipment ID:</label>
+                        <input type="text" id="equipment_id" placeholder="Enter equipment ID (e.g., EQP-001)" required>
+                    </div>
+                    
+                    <div class="qr-methods">
+                        <div class="method-btn active" data-method="online">🌐 Online QR</div>
+                        <div class="method-btn" data-method="library">📚 JS Library</div>
+                    </div>
+                    
+                    <button type="button" class="btn" onclick="generateQR()">🚀 Generate QR Code</button>
+                </div>
+                
+                <div id="qr-display" class="qr-display hidden">
+                    <div id="qrcode"></div>
+                    <p style="margin-top: 15px; color: #4a5568;">
+                        Scan this QR code to search for equipment: <strong id="qr-equipment-id"></strong>
+                    </p>
+                    <p style="margin-top: 10px; color: #666; font-size: 14px;">
+                        📍 This QR code will redirect to Google search with the equipment ID
+                    </p>
+                    <button class="btn" onclick="downloadQR()" style="margin-top: 15px;">⬇️ Download QR Code</button>
+                </div>
+            </div>
+            
+            <!-- Redirect Section (shown when QR is scanned) -->
+            <div id="redirect-section" class="hidden">
+                <div class="equipment-info">
+                    🏭 Equipment ID: <span style="color: #667eea;" id="redirect-equipment-id"></span>
+                </div>
+                
+                <div class="redirect-info">
+                    <h2 style="color: #4a5568; margin-bottom: 20px;">🔍 Redirecting to Google Search</h2>
+                    <p style="margin-bottom: 15px; color: #666;">
+                        You will be redirected to Google to search for equipment information...
+                    </p>
+                    
+                    <div class="countdown" id="countdown">5</div>
+                    
+                    <button class="btn" onclick="redirectNow()" style="margin-top: 15px;">
+                        🚀 Search Now
+                    </button>
+                    
+                    <button class="btn" onclick="cancelRedirect()" style="margin-left: 10px; background: #fc466b;">
+                        ❌ Cancel
+                    </button>
+                </div>
+            </div>
+            
+            <div id="statusMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        // Application state
+        let currentEquipmentId = '';
+        let selectedMethod = 'online';
+        let redirectTimer = null;
+        let countdownValue = 5;
+
+        // Initialize on page load
+        window.onload = function() {
+            checkUrlParams();
+            initializeMethodSelection();
+        };
+
+        function initializeMethodSelection() {
+            const methodBtns = document.querySelectorAll('.method-btn');
+            methodBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    methodBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedMethod = this.dataset.method;
+                });
+            });
+        }
+
+        function checkUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const equipmentId = urlParams.get('equipment_id');
+            
+            if (equipmentId) {
+                // This is a scanned QR code - show redirect page
+                currentEquipmentId = equipmentId;
+                document.getElementById('redirect-equipment-id').textContent = equipmentId;
+                document.getElementById('generator-section').classList.add('hidden');
+                document.getElementById('redirect-section').classList.remove('hidden');
+                
+                // Start countdown
+                startRedirectCountdown();
+            }
+        }
+
+        function startRedirectCountdown() {
+            const countdownEl = document.getElementById('countdown');
+            
+            redirectTimer = setInterval(() => {
+                countdownValue--;
+                countdownEl.textContent = countdownValue;
+                
+                if (countdownValue <= 0) {
+                    redirectToGoogle();
+                }
+            }, 1000);
+        }
+
+        function redirectToGoogle() {
+            if (redirectTimer) {
+                clearInterval(redirectTimer);
+                redirectTimer = null;
+            }
+            
+            const searchQuery = `equipment ${currentEquipmentId}`;
+            const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+            
+            // Show status message briefly before redirect
+            showStatus('🔍 Redirecting to Google...', 'success');
+            
+            setTimeout(() => {
+                window.location.href = googleUrl;
+            }, 1000);
+        }
+
+        function redirectNow() {
+            redirectToGoogle();
+        }
+
+        function cancelRedirect() {
+            if (redirectTimer) {
+                clearInterval(redirectTimer);
+                redirectTimer = null;
+            }
+            
+            // Go back to generator
+            window.history.pushState({}, '', window.location.pathname);
+            document.getElementById('redirect-section').classList.add('hidden');
+            document.getElementById('generator-section').classList.remove('hidden');
+            document.getElementById('statusMessage').innerHTML = '';
+            
+            showStatus('Redirect cancelled', 'success');
+        }
+
+        function generateQR() {
+            const equipmentId = document.getElementById('equipment_id').value.trim();
+            
+            if (!equipmentId) {
+                showStatus('Please enter an equipment ID', 'error');
+                return;
+            }
+            
+            // Create the URL with equipment ID parameter
+            const baseUrl = `https://heartfelt-tapioca-f2a113.netlify.app/`
+            const qrUrl = `${baseUrl}?equipment_id=${encodeURIComponent(equipmentId)}`;
+            
+            if (selectedMethod === 'online') {
+                generateOnlineQR(qrUrl, equipmentId);
+            } else {
+                generateLibraryQR(qrUrl, equipmentId);
+            }
+        }
+
+        function generateOnlineQR(qrUrl, equipmentId) {
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '<p style="color: #667eea;">🔄 Generating QR Code...</p>';
+            
+            // Create image element for online QR service
+            const img = document.createElement('img');
+            img.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&format=png&data=${encodeURIComponent(qrUrl)}`;
+            img.alt = 'QR Code for ' + equipmentId;
+            img.style.borderRadius = '12px';
+            img.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.1)';
+            img.style.maxWidth = '100%';
+            
+            img.onload = function() {
+                qrContainer.innerHTML = '';
+                qrContainer.appendChild(img);
+                
+                document.getElementById('qr-display').classList.remove('hidden');
+                document.getElementById('qr-equipment-id').textContent = equipmentId;
+                showStatus('✅ QR Code generated successfully! 🎉', 'success');
+                
+                currentEquipmentId = equipmentId;
+            };
+            
+            img.onerror = function() {
+                qrContainer.innerHTML = '<p style="color: #fc466b;">❌ Failed to load QR code</p>';
+                showStatus('Failed to generate QR code using online service. Please try the JS Library method or check your internet connection.', 'error');
+            };
+        }
+
+        function generateLibraryQR(qrUrl, equipmentId) {
+            // Dynamic import of QR library
+            if (!window.QRCode) {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+                script.onload = function() {
+                    console.log('QRCode library loaded successfully');
+                    generateWithLibrary(qrUrl, equipmentId);
+                };
+                script.onerror = function() {
+                    showStatus('Failed to load QR Code library. Please use Online QR method instead.', 'error');
+                };
+                document.head.appendChild(script);
+            } else {
+                generateWithLibrary(qrUrl, equipmentId);
+            }
+        }
+
+        function generateWithLibrary(qrUrl, equipmentId) {
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            
+            try {
+                // Create canvas
+                const canvas = document.createElement('canvas');
+                qrContainer.appendChild(canvas);
+                
+                window.QRCode.toCanvas(canvas, qrUrl, {
+                    width: 300,
+                    height: 300,
+                    colorDark: '#2d3748',
+                    colorLight: '#ffffff',
+                    errorCorrectionLevel: 'H'
+                }, function (error) {
+                    if (error) {
+                        console.error('QR Generation Error:', error);
+                        qrContainer.innerHTML = '<p style="color: #fc466b;">❌ Library QR generation failed</p>';
+                        showStatus('QR generation failed with library method. Try the Online QR method instead.', 'error');
+                    } else {
+                        document.getElementById('qr-display').classList.remove('hidden');
+                        document.getElementById('qr-equipment-id').textContent = equipmentId;
+                        showStatus('✅ QR Code generated successfully using JS library! 🎉', 'success');
+                        
+                        currentEquipmentId = equipmentId;
+                    }
+                });
+            } catch (error) {
+                console.error('Library error:', error);
+                qrContainer.innerHTML = '<p style="color: #fc466b;">❌ Library error occurred</p>';
+                showStatus('Library error. Please try the Online QR method.', 'error');
+            }
+        }
+
+        function downloadQR() {
+            const qrContainer = document.getElementById('qrcode');
+            const canvas = qrContainer.querySelector('canvas');
+            const img = qrContainer.querySelector('img');
+            
+            if (canvas) {
+                // Download canvas QR code
+                const link = document.createElement('a');
+                link.download = `qr_${currentEquipmentId}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showStatus('QR Code downloaded successfully!', 'success');
+            } else if (img) {
+                // For online QR, create a new link
+                const link = document.createElement('a');
+                link.download = `qr_${currentEquipmentId}.png`;
+                link.href = img.src;
+                link.target = '_blank';
+                link.click();
+                showStatus('QR Code download initiated!', 'success');
+            } else {
+                showStatus('No QR code available to download', 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        // Add interactive animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    if (!this.disabled) {
+                        this.style.transform = 'translateY(-2px) scale(1.02)';
+                    }
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    if (!this.disabled) {
+                        this.style.transform = 'translateY(0) scale(1)';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
