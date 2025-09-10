@@ -188,26 +188,98 @@
             border-radius: 15px;
             margin-bottom: 30px;
             text-align: center;
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 600;
             color: #2d3748;
             border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
-        .redirect-info {
-            background: rgba(255, 255, 255, 0.6);
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
-            text-align: center;
-            border: 2px solid rgba(102, 126, 234, 0.3);
+        .action-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
         }
 
-        .countdown {
+        .action-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 25px 20px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            min-height: 120px;
+            justify-content: center;
+        }
+
+        .action-btn.repair {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .action-btn.training {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+        }
+
+        .action-btn.maintenance {
+            background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+        }
+
+        .action-btn.status {
+            background: linear-gradient(135deg, #48dbfb 0%, #0abde3 100%);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-icon {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .welcome-title {
+            color: #2d3748;
             font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
-            margin: 10px 0;
+            margin-bottom: 15px;
+            font-weight: 400;
+        }
+
+        .welcome-subtitle {
+            color: #4a5568;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(113, 128, 150, 0.3);
         }
 
         @media (max-width: 768px) {
@@ -222,13 +294,28 @@
             h1 {
                 font-size: 2em;
             }
+
+            .action-options {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 15px;
+            }
+
+            .action-btn {
+                padding: 20px 15px;
+                font-size: 16px;
+                min-height: 100px;
+            }
+
+            .action-icon {
+                font-size: 2em;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <h1>🔧 Equipment QR Generator</h1>
+            <h1>🔧 Equipment QR System</h1>
             
             <!-- QR Generator Section -->
             <div id="generator-section">
@@ -251,35 +338,47 @@
                 <div id="qr-display" class="qr-display hidden">
                     <div id="qrcode"></div>
                     <p style="margin-top: 15px; color: #4a5568;">
-                        Scan this QR code to search for equipment: <strong id="qr-equipment-id"></strong>
+                        Scan this QR code to access equipment: <strong id="qr-equipment-id"></strong>
                     </p>
                     <p style="margin-top: 10px; color: #666; font-size: 14px;">
-                        📍 This QR code will redirect to Google search with the equipment ID
+                        📱 This QR code will open the equipment action menu
                     </p>
                     <button class="btn" onclick="downloadQR()" style="margin-top: 15px;">⬇️ Download QR Code</button>
                 </div>
             </div>
             
-            <!-- Redirect Section (shown when QR is scanned) -->
-            <div id="redirect-section" class="hidden">
+            <!-- Equipment Actions Section (shown when QR is scanned) -->
+            <div id="equipment-section" class="hidden">
+                <button class="back-btn" onclick="goBackToGenerator()">← Back to Generator</button>
+                
                 <div class="equipment-info">
-                    🏭 Equipment ID: <span style="color: #667eea;" id="redirect-equipment-id"></span>
+                    🏭 Equipment: <span style="color: #667eea;" id="equipment-display-id"></span>
                 </div>
                 
-                <div class="redirect-info">
-                    <h2 style="color: #4a5568; margin-bottom: 20px;">🔍 Redirecting to Google Search</h2>
-                    <p style="margin-bottom: 15px; color: #666;">
-                        You will be redirected to Google to search for equipment information...
-                    </p>
-                    
-                    <div class="countdown" id="countdown">5</div>
-                    
-                    <button class="btn" onclick="redirectNow()" style="margin-top: 15px;">
-                        🚀 Search Now
+                <div class="welcome-section">
+                    <h2 class="welcome-title">Welcome to Equipment Portal</h2>
+                    <p class="welcome-subtitle">Select an action to proceed:</p>
+                </div>
+                
+                <div class="action-options">
+                    <button class="action-btn repair" onclick="selectAction('repair')">
+                        <div class="action-icon">🔧</div>
+                        <div>Repair</div>
                     </button>
                     
-                    <button class="btn" onclick="cancelRedirect()" style="margin-left: 10px; background: #fc466b;">
-                        ❌ Cancel
+                    <button class="action-btn training" onclick="selectAction('training')">
+                        <div class="action-icon">📚</div>
+                        <div>Training</div>
+                    </button>
+                    
+                    <button class="action-btn maintenance" onclick="selectAction('maintenance')">
+                        <div class="action-icon">⚙️</div>
+                        <div>Maintenance</div>
+                    </button>
+                    
+                    <button class="action-btn status" onclick="selectAction('status')">
+                        <div class="action-icon">📊</div>
+                        <div>Status</div>
                     </button>
                 </div>
             </div>
@@ -292,8 +391,6 @@
         // Application state
         let currentEquipmentId = '';
         let selectedMethod = 'online';
-        let redirectTimer = null;
-        let countdownValue = 5;
 
         // Initialize on page load
         window.onload = function() {
@@ -317,64 +414,79 @@
             const equipmentId = urlParams.get('equipment_id');
             
             if (equipmentId) {
-                // This is a scanned QR code - show redirect page
+                // This is a scanned QR code - show equipment actions
                 currentEquipmentId = equipmentId;
-                document.getElementById('redirect-equipment-id').textContent = equipmentId;
+                document.getElementById('equipment-display-id').textContent = equipmentId;
                 document.getElementById('generator-section').classList.add('hidden');
-                document.getElementById('redirect-section').classList.remove('hidden');
+                document.getElementById('equipment-section').classList.remove('hidden');
                 
-                // Start countdown
-                startRedirectCountdown();
+                showStatus(`✅ Equipment ${equipmentId} loaded successfully!`, 'success');
             }
         }
 
-        function startRedirectCountdown() {
-            const countdownEl = document.getElementById('countdown');
+        function selectAction(action) {
+            const actionNames = {
+                'repair': '🔧 Repair',
+                'training': '📚 Training',
+                'maintenance': '⚙️ Maintenance',
+                'status': '📊 Status'
+            };
             
-            redirectTimer = setInterval(() => {
-                countdownValue--;
-                countdownEl.textContent = countdownValue;
-                
-                if (countdownValue <= 0) {
-                    redirectToGoogle();
-                }
-            }, 1000);
+            const selectedAction = actionNames[action];
+            showStatus(`${selectedAction} selected for equipment ${currentEquipmentId}`, 'success');
+            
+            // Here you can add specific logic for each action
+            switch(action) {
+                case 'repair':
+                    handleRepairAction();
+                    break;
+                case 'training':
+                    handleTrainingAction();
+                    break;
+                case 'maintenance':
+                    handleMaintenanceAction();
+                    break;
+                case 'status':
+                    handleStatusAction();
+                    break;
+            }
         }
 
-        function redirectToGoogle() {
-            if (redirectTimer) {
-                clearInterval(redirectTimer);
-                redirectTimer = null;
-            }
-            
-            const searchQuery = `equipment ${currentEquipmentId}`;
-            const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
-            
-            // Show status message briefly before redirect
-            showStatus('🔍 Redirecting to Google...', 'success');
-            
+        function handleRepairAction() {
+            // Add your repair logic here
             setTimeout(() => {
-                window.location.href = googleUrl;
+                showStatus('🔧 Repair module for equipment ' + currentEquipmentId + ' would be loaded here.', 'success');
             }, 1000);
         }
 
-        function redirectNow() {
-            redirectToGoogle();
+        function handleTrainingAction() {
+            // Add your training logic here
+            setTimeout(() => {
+                showStatus('📚 Training materials for equipment ' + currentEquipmentId + ' would be displayed here.', 'success');
+            }, 1000);
         }
 
-        function cancelRedirect() {
-            if (redirectTimer) {
-                clearInterval(redirectTimer);
-                redirectTimer = null;
-            }
-            
-            // Go back to generator
+        function handleMaintenanceAction() {
+            // Add your maintenance logic here
+            setTimeout(() => {
+                showStatus('⚙️ Maintenance schedule for equipment ' + currentEquipmentId + ' would be shown here.', 'success');
+            }, 1000);
+        }
+
+        function handleStatusAction() {
+            // Add your status logic here
+            setTimeout(() => {
+                showStatus('📊 Status dashboard for equipment ' + currentEquipmentId + ' would be displayed here.', 'success');
+            }, 1000);
+        }
+
+        function goBackToGenerator() {
+            // Clear URL parameters and go back to generator
             window.history.pushState({}, '', window.location.pathname);
-            document.getElementById('redirect-section').classList.add('hidden');
+            document.getElementById('equipment-section').classList.add('hidden');
             document.getElementById('generator-section').classList.remove('hidden');
             document.getElementById('statusMessage').innerHTML = '';
-            
-            showStatus('Redirect cancelled', 'success');
+            currentEquipmentId = '';
         }
 
         function generateQR() {
@@ -516,7 +628,7 @@
 
         // Add interactive animations
         document.addEventListener('DOMContentLoaded', function() {
-            const buttons = document.querySelectorAll('.btn');
+            const buttons = document.querySelectorAll('.btn, .action-btn, .back-btn');
             buttons.forEach(button => {
                 button.addEventListener('mouseenter', function() {
                     if (!this.disabled) {
