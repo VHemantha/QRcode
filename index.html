@@ -786,14 +786,18 @@
     try {
         const response = await fetch(tokenurl, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: payload
         });
 
         // Check if the response is OK (status code 200-299)
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();  // Get the error message from the response
+            alert(`HTTP error! status: ${response.status}\nMessage: ${errorText}`);
+            throw new Error(`HTTP error! status: ${response.status}, Message: ${errorText}`);
         }
-
         // Parse the JSON response and return the access token
         const data = await response.json();
         return data.access_token;
