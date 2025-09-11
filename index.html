@@ -146,6 +146,12 @@
             border: 1px solid #f5c6cb;
         }
 
+        .status-loading {
+            background: linear-gradient(135deg, #d1ecf1, #b8daff);
+            color: #155724;
+            border: 1px solid #bee5eb;
+        }
+
         .config-section {
             background: rgba(255, 255, 255, 0.3);
             padding: 20px;
@@ -236,9 +242,16 @@
             background: linear-gradient(135deg, #48dbfb 0%, #0abde3 100%);
         }
 
-        .action-btn:hover {
+        .action-btn:hover:not(:disabled) {
             transform: translateY(-5px) scale(1.05);
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
         }
 
         .action-icon {
@@ -280,6 +293,20 @@
         .back-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 5px 15px rgba(113, 128, 150, 0.3);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
@@ -394,6 +421,11 @@
         let client_id = 'JYL3LVURXHMERKNRTUR6GAVI2GCOKD7IJUDWG4YT'; // Replace with your actual client ID
         let client_secret = 'cGD22PuMvfIytbBoNI_3iZ1_60rbbwSb19PS7BmAnpQbux4yGtS6CMdppGIhGBaG6Jcd093m'; // Replace with your actual client secret
         let tokenurl = 'https://app.workhub24.com/api/auth/token';
+        let accessToken = null;
+        let tokenExpiry = null;
+
+        // API endpoint
+        const endpoint = 'https://app.workhub24.com/api/workflows/XMFFQMFUEFUXL5UEC72I5XJZQB24ME56/w6890b2a840/cards';
 
         // Initialize on page load
         window.onload = function() {
@@ -423,22 +455,26 @@
                 document.getElementById('generator-section').classList.add('hidden');
                 document.getElementById('equipment-section').classList.remove('hidden');
                 
-                showStatus(`✅ Equipment ${equipmentId} loaded successfully!`, 'success');
+                showStatus(`Equipment ${equipmentId} loaded successfully!`, 'success');
             }
         }
 
         function selectAction(action) {
             const actionNames = {
-                'repair': '🔧 Repair',
-                'training': '📚 Training',
-                'maintenance': '⚙️ Maintenance',
-                'status': '📊 Status'
+                'repair': 'Repair',
+                'training': 'Training',
+                'maintenance': 'Maintenance',
+                'status': 'Status'
             };
             
             const selectedAction = actionNames[action];
-            showStatus(`${selectedAction} selected for equipment ${currentEquipmentId}`, 'success');
             
-            // Here you can add specific logic for each action
+            // Disable all action buttons while processing
+            disableActionButtons(true);
+            
+            showStatus(`${selectedAction} selected for equipment ${currentEquipmentId}. Processing...`, 'loading');
+            
+            // Handle the action
             switch(action) {
                 case 'repair':
                     handleRepairAction();
@@ -455,37 +491,131 @@
             }
         }
 
-        function handleRepairAction() {
-            // Add your repair logic here
-            setTimeout(() => {
-                showStatus('🔧 Repair module for equipment ' + currentEquipmentId + ' would be loaded here.', 'success');
-            }, 1000);
-        }
-
-        function handleTrainingAction() {
-            // Add your training logic here
-            setTimeout(() => {
-                showStatus('📚 Training materials for equipment ' + currentEquipmentId + ' would be displayed here.', 'success');
-            }, 1000);
-        }
-
-        function handleMaintenanceAction() {
-            // Add your maintenance logic here
-            makeApiPostRequest({
-                equipmentId: currentEquipmentId,
-                action: 'maintenance'
+        function disableActionButtons(disable) {
+            const actionBtns = document.querySelectorAll('.action-btn');
+            actionBtns.forEach(btn => {
+                btn.disabled = disable;
+                if (disable) {
+                    btn.style.cursor = 'not-allowed';
+                    btn.style.opacity = '0.6';
+                } else {
+                    btn.style.cursor = 'pointer';
+                    btn.style.opacity = '1';
+                }
             });
-            console.log('Maintenance action initiated for equipment:', currentEquipmentId);
-            setTimeout(() => {
-                showStatus('⚙️ Maintenance schedule for equipment ' + currentEquipmentId + ' would be shown here.', 'success');
-            }, 1000);
         }
 
-        function handleStatusAction() {
-            // Add your status logic here
-            setTimeout(() => {
-                showStatus('📊 Status dashboard for equipment ' + currentEquipmentId + ' would be displayed here.', 'success');
-            }, 1000);
+        async function handleRepairAction() {
+            try {
+                const apiData = {
+                    equipmentId: currentEquipmentId,
+                    action: 'repair',
+                    timestamp: new Date().toISOString(),
+                    userId: 'current_user',
+                    priority: 'high',
+                    description: `Repair request initiated for equipment ${currentEquipmentId}`
+                };
+
+                console.log('Sending repair data:', apiData);
+                const result = await makeApiPostRequest(apiData);
+                
+                if (result) {
+                    showStatus('Repair request submitted successfully! Ticket created.', 'success');
+                    console.log('Repair API response:', result);
+                } else {
+                    throw new Error('API request failed');
+                }
+            } catch (error) {
+                console.error('Repair action error:', error);
+                showStatus('Failed to submit repair request. Please try again.', 'error');
+            } finally {
+                disableActionButtons(false);
+            }
+        }
+
+        async function handleTrainingAction() {
+            try {
+                const apiData = {
+                    equipmentId: currentEquipmentId,
+                    action: 'training',
+                    timestamp: new Date().toISOString(),
+                    userId: 'current_user',
+                    trainingType: 'equipment_operation',
+                    description: `Training materials requested for equipment ${currentEquipmentId}`
+                };
+
+                console.log('Sending training data:', apiData);
+                const result = await makeApiPostRequest(apiData);
+                
+                if (result) {
+                    showStatus('Training materials request submitted successfully!', 'success');
+                    console.log('Training API response:', result);
+                } else {
+                    throw new Error('API request failed');
+                }
+            } catch (error) {
+                console.error('Training action error:', error);
+                showStatus('Failed to request training materials. Please try again.', 'error');
+            } finally {
+                disableActionButtons(false);
+            }
+        }
+
+        async function handleMaintenanceAction() {
+            try {
+                const apiData = {
+                    equipmentId: currentEquipmentId,
+                    action: 'maintenance',
+                    timestamp: new Date().toISOString(),
+                    userId: 'current_user',
+                    maintenanceType: 'scheduled',
+                    priority: 'medium',
+                    description: `Maintenance request initiated for equipment ${currentEquipmentId}`
+                };
+
+                console.log('Sending maintenance data:', apiData);
+                const result = await makeApiPostRequest(apiData);
+                
+                if (result) {
+                    showStatus('Maintenance request submitted successfully! Schedule created.', 'success');
+                    console.log('Maintenance API response:', result);
+                } else {
+                    throw new Error('API request failed');
+                }
+            } catch (error) {
+                console.error('Maintenance action error:', error);
+                showStatus('Failed to submit maintenance request. Please try again.', 'error');
+            } finally {
+                disableActionButtons(false);
+            }
+        }
+
+        async function handleStatusAction() {
+            try {
+                const apiData = {
+                    equipmentId: currentEquipmentId,
+                    action: 'status_check',
+                    timestamp: new Date().toISOString(),
+                    userId: 'current_user',
+                    requestType: 'status_inquiry',
+                    description: `Status check requested for equipment ${currentEquipmentId}`
+                };
+
+                console.log('Sending status data:', apiData);
+                const result = await makeApiPostRequest(apiData);
+                
+                if (result) {
+                    showStatus('Status check completed successfully! Dashboard updated.', 'success');
+                    console.log('Status API response:', result);
+                } else {
+                    throw new Error('API request failed');
+                }
+            } catch (error) {
+                console.error('Status action error:', error);
+                showStatus('Failed to retrieve status information. Please try again.', 'error');
+            } finally {
+                disableActionButtons(false);
+            }
         }
 
         function goBackToGenerator() {
@@ -495,6 +625,7 @@
             document.getElementById('generator-section').classList.remove('hidden');
             document.getElementById('statusMessage').innerHTML = '';
             currentEquipmentId = '';
+            disableActionButtons(false);
         }
 
         function generateQR() {
@@ -518,7 +649,7 @@
 
         function generateOnlineQR(qrUrl, equipmentId) {
             const qrContainer = document.getElementById('qrcode');
-            qrContainer.innerHTML = '<p style="color: #667eea;">🔄 Generating QR Code...</p>';
+            qrContainer.innerHTML = '<p style="color: #667eea;">Generating QR Code...</p>';
             
             // Create image element for online QR service
             const img = document.createElement('img');
@@ -534,13 +665,13 @@
                 
                 document.getElementById('qr-display').classList.remove('hidden');
                 document.getElementById('qr-equipment-id').textContent = equipmentId;
-                showStatus('✅ QR Code generated successfully! 🎉', 'success');
+                showStatus('QR Code generated successfully!', 'success');
                 
                 currentEquipmentId = equipmentId;
             };
             
             img.onerror = function() {
-                qrContainer.innerHTML = '<p style="color: #fc466b;">❌ Failed to load QR code</p>';
+                qrContainer.innerHTML = '<p style="color: #fc466b;">Failed to load QR code</p>';
                 showStatus('Failed to generate QR code using online service. Please try the JS Library method or check your internet connection.', 'error');
             };
         }
@@ -581,19 +712,19 @@
                 }, function (error) {
                     if (error) {
                         console.error('QR Generation Error:', error);
-                        qrContainer.innerHTML = '<p style="color: #fc466b;">❌ Library QR generation failed</p>';
+                        qrContainer.innerHTML = '<p style="color: #fc466b;">Library QR generation failed</p>';
                         showStatus('QR generation failed with library method. Try the Online QR method instead.', 'error');
                     } else {
                         document.getElementById('qr-display').classList.remove('hidden');
                         document.getElementById('qr-equipment-id').textContent = equipmentId;
-                        showStatus('✅ QR Code generated successfully using JS library! 🎉', 'success');
+                        showStatus('QR Code generated successfully using JS library!', 'success');
                         
                         currentEquipmentId = equipmentId;
                     }
                 });
             } catch (error) {
                 console.error('Library error:', error);
-                qrContainer.innerHTML = '<p style="color: #fc466b;">❌ Library error occurred</p>';
+                qrContainer.innerHTML = '<p style="color: #fc466b;">Library error occurred</p>';
                 showStatus('Library error. Please try the Online QR method.', 'error');
             }
         }
@@ -625,18 +756,116 @@
 
         function showStatus(message, type) {
             const statusDiv = document.getElementById('statusMessage');
-            statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+            let iconClass = '';
+            
+            if (type === 'loading') {
+                iconClass = '<div class="spinner"></div> ';
+            }
+            
+            statusDiv.innerHTML = `<div class="status-message status-${type}">${iconClass}${message}</div>`;
             
             if (type === 'success') {
                 setTimeout(() => {
                     statusDiv.innerHTML = '';
                 }, 5000);
+            } else if (type === 'error') {
+                setTimeout(() => {
+                    statusDiv.innerHTML = '';
+                }, 10000);
+            }
+        }
+
+        // Function to obtain access token with caching
+        async function getAccessToken() {
+            // Check if we have a valid cached token
+            if (accessToken && tokenExpiry && new Date() < tokenExpiry) {
+                console.log('Using cached access token');
+                return accessToken;
+            }
+
+            const payload = new URLSearchParams({
+                grant_type: "client_credentials",
+                client_id: client_id,
+                client_secret: client_secret
+            });
+
+            try {
+                console.log('Requesting new access token...');
+                const response = await fetch(tokenurl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: payload
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                }
+
+                const data = await response.json();
+                
+                // Cache the token and set expiry (assuming 1 hour expiry if not provided)
+                accessToken = data.access_token;
+                const expiresIn = data.expires_in || 3600; // Default to 1 hour
+                tokenExpiry = new Date(Date.now() + (expiresIn - 60) * 1000); // Refresh 1 minute early
+                
+                console.log('Access token obtained successfully');
+                return accessToken;
+
+            } catch (error) {
+                console.error(`Error obtaining access token: ${error.message}`);
+                accessToken = null;
+                tokenExpiry = null;
+                return null;
+            }
+        }
+
+        // Function to make API POST requests
+        async function makeApiPostRequest(data) {
+            const token = await getAccessToken();
+            if (!token) {
+                console.error('Cannot make API call: no access token');
+                throw new Error('Failed to obtain access token');
+            }
+
+            try {
+                console.log('Making API POST request to:', endpoint);
+                console.log('Request data:', JSON.stringify(data, null, 2));
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                console.log('API Response status:', response.status);
+                console.log('API Response headers:', [...response.headers.entries()]);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error Response:', errorText);
+                    throw new Error(`API POST request failed: ${response.status} - ${errorText}`);
+                }
+
+                const result = await response.json();
+                console.log('API POST request successful:', result);
+                return result;
+                
+            } catch (error) {
+                console.error('API POST request error:', error.message);
+                throw error;
             }
         }
 
         // Add interactive animations
         document.addEventListener('DOMContentLoaded', function() {
-            const buttons = document.querySelectorAll('.btn, .action-btn, .back-btn');
+            const buttons = document.querySelectorAll('.btn, .action-btn:not(:disabled), .back-btn');
             buttons.forEach(button => {
                 button.addEventListener('mouseenter', function() {
                     if (!this.disabled) {
@@ -651,71 +880,6 @@
                 });
             });
         });
-
-
-
-// Function to obtain access token
-async function getAccessToken() {
-    const payload = new URLSearchParams({
-        grant_type: "client_credentials",
-        client_id: client_id,
-        client_secret: client_secret
-    });
-
-    try {
-        const response = await fetch(tokenurl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: payload
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('Access Token:', data.access_token);
-        return data.access_token;
-
-    } catch (error) {
-        console.error(`Error obtaining access token: ${error}`);
-        return null;
-    }
-}
-
-const endpoint = 'https://app.workhub24.com/api/workflows/XMFFQMFUEFUXL5UEC72I5XJZQB24ME56/w6890b2a840/cards';
-
-async function makeApiPostRequest(data) {
-    const token = await getAccessToken();
-    if (!token) {
-        console.error('Cannot make API call: no access token');
-        return null;
-    }
-
-    try {
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`API POST request failed: ${response.status} - ${errorText}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('API POST request error:', error);
-        return null;
-    }
-}
-
     </script>
 </body>
 </html>
