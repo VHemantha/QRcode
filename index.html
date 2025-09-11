@@ -391,6 +391,9 @@
         // Application state
         let currentEquipmentId = '';
         let selectedMethod = 'online';
+        let client_id = 'JYL3LVURXHMERKNRTUR6GAVI2GCOKD7IJUDWG4YT'; // Replace with your actual client ID
+        let client_secret = 'cGD22PuMvfIytbBoNI_3iZ1_60rbbwSb19PS7BmAnpQbux4yGtS6CMdppGIhGBaG6Jcd093m'; // Replace with your actual client secret
+        let tokenurl = 'https://app.workhub24.com/api/auth/token';
 
         // Initialize on page load
         window.onload = function() {
@@ -468,6 +471,11 @@
 
         function handleMaintenanceAction() {
             // Add your maintenance logic here
+            makeApiPostRequest({
+                equipmentId: currentEquipmentId,
+                action: 'maintenance'
+            });
+            console.log('Maintenance action initiated for equipment:', currentEquipmentId);
             setTimeout(() => {
                 showStatus('⚙️ Maintenance schedule for equipment ' + currentEquipmentId + ' would be shown here.', 'success');
             }, 1000);
@@ -643,6 +651,71 @@
                 });
             });
         });
+
+
+
+// Function to obtain access token
+async function getAccessToken() {
+    const payload = new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: client_id,
+        client_secret: client_secret
+    });
+
+    try {
+        const response = await fetch(tokenurl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: payload
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Access Token:', data.access_token);
+        return data.access_token;
+
+    } catch (error) {
+        console.error(`Error obtaining access token: ${error}`);
+        return null;
+    }
+}
+
+const endpoint = 'https://app.workhub24.com/api/workflows/XMFFQMFUEFUXL5UEC72I5XJZQB24ME56/w6890b2a840/cards';
+
+async function makeApiPostRequest(data) {
+    const token = await getAccessToken();
+    if (!token) {
+        console.error('Cannot make API call: no access token');
+        return null;
+    }
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API POST request failed: ${response.status} - ${errorText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('API POST request error:', error);
+        return null;
+    }
+}
+
     </script>
 </body>
 </html>
