@@ -777,50 +777,32 @@
 
         // Function to obtain access token with caching
         async function getAccessToken() {
-            // Check if we have a valid cached token
-            if (accessToken && tokenExpiry && new Date() < tokenExpiry) {
-                console.log('Using cached access token');
-                return accessToken;
-            }
+    const payload = new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: client_id,
+        client_secret: client_secret
+    });
 
-            const payload = new URLSearchParams({
-                grant_type: "client_credentials",
-                client_id: client_id,
-                client_secret: client_secret
-            });
+    try {
+        const response = await fetch(tokenurl, {
+            method: 'POST',
+            body: payload
+        });
 
-            try {
-                console.log('Requesting new access token...');
-                const response = await fetch(tokenurl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: payload
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-                }
-
-                const data = await response.json();
-                
-                // Cache the token and set expiry (assuming 1 hour expiry if not provided)
-                accessToken = data.access_token;
-                const expiresIn = data.expires_in || 3600; // Default to 1 hour
-                tokenExpiry = new Date(Date.now() + (expiresIn - 60) * 1000); // Refresh 1 minute early
-                
-                console.log('Access token obtained successfully');
-                return accessToken;
-
-            } catch (error) {
-                console.error(`Error obtaining access token: ${error.message}`);
-                accessToken = null;
-                tokenExpiry = null;
-                return null;
-            }
+        // Check if the response is OK (status code 200-299)
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        // Parse the JSON response and return the access token
+        const data = await response.json();
+        return data.access_token;
+    } catch (error) {
+        console.error(`Error obtaining access token: ${error.message}`);
+        return null;
+    }
+}
+
 
         // Function to make API POST requests
         async function makeApiPostRequest(data) {
