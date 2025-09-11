@@ -508,12 +508,8 @@
         async function handleRepairAction() {
             try {
                 const apiData = {
-                    equipmentId: currentEquipmentId,
-                    action: 'repair',
-                    timestamp: new Date().toISOString(),
-                    userId: 'current_user',
-                    priority: 'high',
-                    description: `Repair request initiated for equipment ${currentEquipmentId}`
+                    facilityID: currentEquipmentId,
+                    
                 };
 
                 console.log('Sending repair data:', apiData);
@@ -536,12 +532,7 @@
         async function handleTrainingAction() {
             try {
                 const apiData = {
-                    equipmentId: currentEquipmentId,
-                    action: 'training',
-                    timestamp: new Date().toISOString(),
-                    userId: 'current_user',
-                    trainingType: 'equipment_operation',
-                    description: `Training materials requested for equipment ${currentEquipmentId}`
+                    facilityID: currentEquipmentId,
                 };
 
                 console.log('Sending training data:', apiData);
@@ -564,13 +555,8 @@
         async function handleMaintenanceAction() {
             try {
                 const apiData = {
-                    equipmentId: currentEquipmentId,
-                    action: 'maintenance',
-                    timestamp: new Date().toISOString(),
-                    userId: 'current_user',
-                    maintenanceType: 'scheduled',
-                    priority: 'medium',
-                    description: `Maintenance request initiated for equipment ${currentEquipmentId}`
+                    facilityID: currentEquipmentId,
+                    
                 };
 
                 console.log('Sending maintenance data:', apiData);
