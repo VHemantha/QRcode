@@ -672,7 +672,7 @@ function generateQR() {
     }
     
     // Create the URL with equipment ID parameter
-    const baseUrl = window.location.origin + window.location.pathname;
+    const baseUrl = 'http://127.0.0.1:5500/QRcode/index.html'
     const qrUrl = `${baseUrl}?equipment_id=${encodeURIComponent(equipmentId)}`;
     
     if (selectedMethod === 'online') {
