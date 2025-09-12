@@ -452,8 +452,8 @@ function checkUrlParams() {
         // This is a scanned QR code - show equipment actions
         currentEquipmentId = equipmentId;
         document.getElementById('equipment-display-id').textContent = equipmentId;
-        document.getElementById('generator-section').classList.add('hidden');
-        document.getElementById('equipment-section').classList.remove('hidden');
+        //document.getElementById('generator-section').classList.add('hidden');
+        //document.getElementById('equipment-section').classList.remove('hidden');
         
         showStatus(`Equipment ${equipmentId} loaded successfully!`, 'success');
     }
