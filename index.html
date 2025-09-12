@@ -415,443 +415,484 @@
     </div>
 
     <script>
-        // Application state
-        let currentEquipmentId = '';
-        let selectedMethod = 'online';
-        let client_id = 'JYL3LVURXHMERKNRTUR6GAVI2GCOKD7IJUDWG4YT'; // Replace with your actual client ID
-        let client_secret = 'cGD22PuMvfIytbBoNI_3iZ1_60rbbwSb19PS7BmAnpQbux4yGtS6CMdppGIhGBaG6Jcd093m'; // Replace with your actual client secret
-        let tokenurl = 'https://app.workhub24.com/api/auth/token';
-        let accessToken = null;
-        let tokenExpiry = null;
+       // Application state
+let currentEquipmentId = '';
+let selectedMethod = 'online';
+let client_id = 'JYL3LVURXHMERKNRTUR6GAVI2GCOKD7IJUDWG4YT'; // Replace with your actual client ID
+let client_secret = 'cGD22PuMvfIytbBoNI_3iZ1_60rbbwSb19PS7BmAnpQbux4yGtS6CMdppGIhGBaG6Jcd093m'; // Replace with your actual client secret
+let tokenurl = 'https://app.workhub24.com/api/auth/token';
+let accessToken = null;
+let tokenExpiry = null;
 
-        // API endpoint
-        const endpoint = 'https://app.workhub24.com/api/workflows/XMFFQMFUEFUXL5UEC72I5XJZQB24ME56/w6890b2a840/cards';
+// API endpoint
+const endpoint = 'https://app.workhub24.com/api/workflows/XMFFQMFUEFUXL5UEC72I5XJZQB24ME56/w6890b2a840/cards';
 
-        // Initialize on page load
-        window.onload = function() {
-            checkUrlParams();
-            initializeMethodSelection();
+// Initialize on page load
+window.onload = function() {
+    checkUrlParams();
+    initializeMethodSelection();
+};
+
+function initializeMethodSelection() {
+    const methodBtns = document.querySelectorAll('.method-btn');
+    methodBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            methodBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedMethod = this.dataset.method;
+        });
+    });
+}
+
+function checkUrlParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const equipmentId = urlParams.get('equipment_id');
+    
+    if (equipmentId) {
+        // This is a scanned QR code - show equipment actions
+        currentEquipmentId = equipmentId;
+        document.getElementById('equipment-display-id').textContent = equipmentId;
+        document.getElementById('generator-section').classList.add('hidden');
+        document.getElementById('equipment-section').classList.remove('hidden');
+        
+        showStatus(`Equipment ${equipmentId} loaded successfully!`, 'success');
+    }
+}
+
+function selectAction(action) {
+    const actionNames = {
+        'repair': 'Repair',
+        'training': 'Training',
+        'maintenance': 'Maintenance',
+        'status': 'Status'
+    };
+    
+    const selectedAction = actionNames[action];
+    
+    // Disable all action buttons while processing
+    disableActionButtons(true);
+    
+    showStatus(`${selectedAction} selected for equipment ${currentEquipmentId}. Processing...`, 'loading');
+    
+    // Handle the action
+    switch(action) {
+        case 'repair':
+            handleRepairAction();
+            break;
+        case 'training':
+            handleTrainingAction();
+            break;
+        case 'maintenance':
+            handleMaintenanceAction();
+            break;
+        case 'status':
+            handleStatusAction();
+            break;
+    }
+}
+
+function disableActionButtons(disable) {
+    const actionBtns = document.querySelectorAll('.action-btn');
+    actionBtns.forEach(btn => {
+        btn.disabled = disable;
+        if (disable) {
+            btn.style.cursor = 'not-allowed';
+            btn.style.opacity = '0.6';
+        } else {
+            btn.style.cursor = 'pointer';
+            btn.style.opacity = '1';
+        }
+    });
+}
+
+async function handleRepairAction() {
+    try {
+        const currentDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+        
+        const apiData = {
+            title: `Repair Request - Equipment ${currentEquipmentId}`,
+            facilityID: currentEquipmentId,
+            issue: `Repair request submitted for equipment ${currentEquipmentId}`,
+            priorityLevel: "High",
+            reportedDate: currentDate,
+            remarkByInitiator: "Repair request submitted via QR code scan",
+            locationID: currentEquipmentId,
+            equipmentText: `Equipment ID: ${currentEquipmentId}`,
+            facilityText: `Facility containing equipment ${currentEquipmentId}`,
+            markAsCompleted: false,
+            confirmedToIssueSpareparts: false
         };
 
-        function initializeMethodSelection() {
-            const methodBtns = document.querySelectorAll('.method-btn');
-            methodBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    methodBtns.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    selectedMethod = this.dataset.method;
-                });
-            });
+        console.log('Sending repair data:', apiData);
+        const result = await makeApiPostRequest(apiData);
+        
+        if (result) {
+            showStatus('Repair request submitted successfully! Ticket created.', 'success');
+            console.log('Repair API response:', result);
+        } else {
+            throw new Error('No response received from API');
         }
+    } catch (error) {
+        console.error('Repair action error:', error);
+        showStatus(`Failed to submit repair request: ${error.message}`, 'error');
+    } finally {
+        disableActionButtons(false);
+    }
+}
 
-        function checkUrlParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const equipmentId = urlParams.get('equipment_id');
-            
-            if (equipmentId) {
-                // This is a scanned QR code - show equipment actions
-                currentEquipmentId = equipmentId;
-                document.getElementById('equipment-display-id').textContent = equipmentId;
-                document.getElementById('generator-section').classList.add('hidden');
-                document.getElementById('equipment-section').classList.remove('hidden');
-                
-                showStatus(`Equipment ${equipmentId} loaded successfully!`, 'success');
-            }
+async function handleTrainingAction() {
+    try {
+        const currentDate = new Date().toISOString().split('T')[0];
+        
+        const apiData = {
+            title: `Training Request - Equipment ${currentEquipmentId}`,
+            facilityID: currentEquipmentId,
+            issue: `Training materials requested for equipment ${currentEquipmentId}`,
+            priorityLevel: "Medium",
+            reportedDate: currentDate,
+            remarkByInitiator: "Training request submitted via QR code scan",
+            locationID: currentEquipmentId,
+            equipmentText: `Equipment ID: ${currentEquipmentId}`,
+            facilityText: `Training for equipment ${currentEquipmentId}`,
+            markAsCompleted: false
+        };
+
+        console.log('Sending training data:', apiData);
+        const result = await makeApiPostRequest(apiData);
+        
+        if (result) {
+            showStatus('Training materials request submitted successfully!', 'success');
+            console.log('Training API response:', result);
+        } else {
+            throw new Error('No response received from API');
         }
+    } catch (error) {
+        console.error('Training action error:', error);
+        showStatus(`Failed to request training materials: ${error.message}`, 'error');
+    } finally {
+        disableActionButtons(false);
+    }
+}
 
-        function selectAction(action) {
-            const actionNames = {
-                'repair': 'Repair',
-                'training': 'Training',
-                'maintenance': 'Maintenance',
-                'status': 'Status'
-            };
-            
-            const selectedAction = actionNames[action];
-            
-            // Disable all action buttons while processing
-            disableActionButtons(true);
-            
-            showStatus(`${selectedAction} selected for equipment ${currentEquipmentId}. Processing...`, 'loading');
-            
-            // Handle the action
-            switch(action) {
-                case 'repair':
-                    handleRepairAction();
-                    break;
-                case 'training':
-                    handleTrainingAction();
-                    break;
-                case 'maintenance':
-                    handleMaintenanceAction();
-                    break;
-                case 'status':
-                    handleStatusAction();
-                    break;
-            }
+async function handleMaintenanceAction() {
+    try {
+        const currentDate = new Date().toISOString().split('T')[0];
+        
+        const apiData = {
+            title: `Maintenance Request - Equipment ${currentEquipmentId}`,
+            facilityID: currentEquipmentId,
+            issue: `Scheduled maintenance requested for equipment ${currentEquipmentId}`,
+            priorityLevel: "Medium",
+            reportedDate: currentDate,
+            remarkByInitiator: "Maintenance request submitted via QR code scan",
+            locationID: currentEquipmentId,
+            equipmentText: `Equipment ID: ${currentEquipmentId}`,
+            facilityText: `Maintenance for equipment ${currentEquipmentId}`,
+            markAsCompleted: false,
+            numOfDays: 7 // Default maintenance period
+        };
+
+        console.log('Sending maintenance data:', apiData);
+        const result = await makeApiPostRequest(apiData);
+        
+        if (result) {
+            showStatus('Maintenance request submitted successfully! Schedule created.', 'success');
+            console.log('Maintenance API response:', result);
+        } else {
+            throw new Error('No response received from API');
         }
+    } catch (error) {
+        console.error('Maintenance action error:', error);
+        showStatus(`Failed to submit maintenance request: ${error.message}`, 'error');
+    } finally {
+        disableActionButtons(false);
+    }
+}
 
-        function disableActionButtons(disable) {
-            const actionBtns = document.querySelectorAll('.action-btn');
-            actionBtns.forEach(btn => {
-                btn.disabled = disable;
-                if (disable) {
-                    btn.style.cursor = 'not-allowed';
-                    btn.style.opacity = '0.6';
-                } else {
-                    btn.style.cursor = 'pointer';
-                    btn.style.opacity = '1';
-                }
-            });
+async function handleStatusAction() {
+    try {
+        const currentDate = new Date().toISOString().split('T')[0];
+        
+        const apiData = {
+            title: `Status Check - Equipment ${currentEquipmentId}`,
+            facilityID: currentEquipmentId,
+            issue: `Status check requested for equipment ${currentEquipmentId}`,
+            priorityLevel: "Low",
+            reportedDate: currentDate,
+            remarkByInitiator: "Status check submitted via QR code scan",
+            locationID: currentEquipmentId,
+            equipmentText: `Equipment ID: ${currentEquipmentId}`,
+            facilityText: `Status check for equipment ${currentEquipmentId}`,
+            markAsCompleted: true // Status checks can be marked as completed immediately
+        };
+
+        console.log('Sending status data:', apiData);
+        const result = await makeApiPostRequest(apiData);
+        
+        if (result) {
+            showStatus('Status check completed successfully! Dashboard updated.', 'success');
+            console.log('Status API response:', result);
+        } else {
+            throw new Error('No response received from API');
         }
+    } catch (error) {
+        console.error('Status action error:', error);
+        showStatus(`Failed to retrieve status information: ${error.message}`, 'error');
+    } finally {
+        disableActionButtons(false);
+    }
+}
 
-        async function handleRepairAction() {
-            try {
-                const apiData = {
-                    facilityID: currentEquipmentId,
-                    
-                };
+function goBackToGenerator() {
+    // Clear URL parameters and go back to generator
+    window.history.pushState({}, '', window.location.pathname);
+    document.getElementById('equipment-section').classList.add('hidden');
+    document.getElementById('generator-section').classList.remove('hidden');
+    document.getElementById('statusMessage').innerHTML = '';
+    currentEquipmentId = '';
+    disableActionButtons(false);
+}
 
-                console.log('Sending repair data:', apiData);
-                const result = await makeApiPostRequest(apiData);
-                
-                if (result) {
-                    showStatus('Repair request submitted successfully! Ticket created.', 'success');
-                    console.log('Repair API response:', result);
-                } else {
-                    throw new Error('No response received from API');
-                }
-            } catch (error) {
-                console.error('Repair action error:', error);
-                showStatus(`Failed to submit repair request: ${error.message}`, 'error');
-            } finally {
-                disableActionButtons(false);
-            }
-        }
+function generateQR() {
+    const equipmentId = document.getElementById('equipment_id').value.trim();
+    
+    if (!equipmentId) {
+        showStatus('Please enter an equipment ID', 'error');
+        return;
+    }
+    
+    // Create the URL with equipment ID parameter
+    const baseUrl = window.location.origin + window.location.pathname;
+    const qrUrl = `${baseUrl}?equipment_id=${encodeURIComponent(equipmentId)}`;
+    
+    if (selectedMethod === 'online') {
+        generateOnlineQR(qrUrl, equipmentId);
+    } else {
+        generateLibraryQR(qrUrl, equipmentId);
+    }
+}
 
-        async function handleTrainingAction() {
-            try {
-                const apiData = {
-                    facilityID: currentEquipmentId,
-                };
+function generateOnlineQR(qrUrl, equipmentId) {
+    const qrContainer = document.getElementById('qrcode');
+    qrContainer.innerHTML = '<p style="color: #667eea;">Generating QR Code...</p>';
+    
+    // Create image element for online QR service
+    const img = document.createElement('img');
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&format=png&data=${encodeURIComponent(qrUrl)}`;
+    img.alt = 'QR Code for ' + equipmentId;
+    img.style.borderRadius = '12px';
+    img.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.1)';
+    img.style.maxWidth = '100%';
+    
+    img.onload = function() {
+        qrContainer.innerHTML = '';
+        qrContainer.appendChild(img);
+        
+        document.getElementById('qr-display').classList.remove('hidden');
+        document.getElementById('qr-equipment-id').textContent = equipmentId;
+        showStatus('QR Code generated successfully!', 'success');
+        
+        currentEquipmentId = equipmentId;
+    };
+    
+    img.onerror = function() {
+        qrContainer.innerHTML = '<p style="color: #fc466b;">Failed to load QR code</p>';
+        showStatus('Failed to generate QR code using online service. Please try the JS Library method or check your internet connection.', 'error');
+    };
+}
 
-                console.log('Sending training data:', apiData);
-                const result = await makeApiPostRequest(apiData);
-                
-                if (result) {
-                    showStatus('Training materials request submitted successfully!', 'success');
-                    console.log('Training API response:', result);
-                } else {
-                    throw new Error('No response received from API');
-                }
-            } catch (error) {
-                console.error('Training action error:', error);
-                showStatus(`Failed to request training materials: ${error.message}`, 'error');
-            } finally {
-                disableActionButtons(false);
-            }
-        }
+function generateLibraryQR(qrUrl, equipmentId) {
+    // Dynamic import of QR library
+    if (!window.QRCode) {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+        script.onload = function() {
+            console.log('QRCode library loaded successfully');
+            generateWithLibrary(qrUrl, equipmentId);
+        };
+        script.onerror = function() {
+            showStatus('Failed to load QR Code library. Please use Online QR method instead.', 'error');
+        };
+        document.head.appendChild(script);
+    } else {
+        generateWithLibrary(qrUrl, equipmentId);
+    }
+}
 
-        async function handleMaintenanceAction() {
-            try {
-                const apiData = {
-                    facilityID: currentEquipmentId,
-                    
-                };
-
-                console.log('Sending maintenance data:', apiData);
-                const result = await makeApiPostRequest(apiData);
-                
-                if (result) {
-                    showStatus('Maintenance request submitted successfully! Schedule created.', 'success');
-                    console.log('Maintenance API response:', result);
-                } else {
-                    throw new Error('No response received from API');
-                }
-            } catch (error) {
-                console.error('Maintenance action error:', error);
-                showStatus(`Failed to submit maintenance request: ${error.message}`, 'error');
-            } finally {
-                disableActionButtons(false);
-            }
-        }
-
-        async function handleStatusAction() {
-            try {
-                const apiData = {
-                    equipmentId: currentEquipmentId,
-                    action: 'status_check',
-                    timestamp: new Date().toISOString(),
-                    userId: 'current_user',
-                    requestType: 'status_inquiry',
-                    description: `Status check requested for equipment ${currentEquipmentId}`
-                };
-
-                console.log('Sending status data:', apiData);
-                const result = await makeApiPostRequest(apiData);
-                
-                if (result) {
-                    showStatus('Status check completed successfully! Dashboard updated.', 'success');
-                    console.log('Status API response:', result);
-                } else {
-                    throw new Error('No response received from API');
-                }
-            } catch (error) {
-                console.error('Status action error:', error);
-                showStatus(`Failed to retrieve status information: ${error.message}`, 'error');
-            } finally {
-                disableActionButtons(false);
-            }
-        }
-
-        function goBackToGenerator() {
-            // Clear URL parameters and go back to generator
-            window.history.pushState({}, '', window.location.pathname);
-            document.getElementById('equipment-section').classList.add('hidden');
-            document.getElementById('generator-section').classList.remove('hidden');
-            document.getElementById('statusMessage').innerHTML = '';
-            currentEquipmentId = '';
-            disableActionButtons(false);
-        }
-
-        function generateQR() {
-            const equipmentId = document.getElementById('equipment_id').value.trim();
-            
-            if (!equipmentId) {
-                showStatus('Please enter an equipment ID', 'error');
-                return;
-            }
-            
-            // Create the URL with equipment ID parameter
-            const baseUrl = window.location.origin + window.location.pathname;
-            const qrUrl = `${baseUrl}?equipment_id=${encodeURIComponent(equipmentId)}`;
-            
-            if (selectedMethod === 'online') {
-                generateOnlineQR(qrUrl, equipmentId);
+function generateWithLibrary(qrUrl, equipmentId) {
+    const qrContainer = document.getElementById('qrcode');
+    qrContainer.innerHTML = '';
+    
+    try {
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        qrContainer.appendChild(canvas);
+        
+        window.QRCode.toCanvas(canvas, qrUrl, {
+            width: 300,
+            height: 300,
+            colorDark: '#2d3748',
+            colorLight: '#ffffff',
+            errorCorrectionLevel: 'H'
+        }, function (error) {
+            if (error) {
+                console.error('QR Generation Error:', error);
+                qrContainer.innerHTML = '<p style="color: #fc466b;">Library QR generation failed</p>';
+                showStatus('QR generation failed with library method. Try the Online QR method instead.', 'error');
             } else {
-                generateLibraryQR(qrUrl, equipmentId);
-            }
-        }
-
-        function generateOnlineQR(qrUrl, equipmentId) {
-            const qrContainer = document.getElementById('qrcode');
-            qrContainer.innerHTML = '<p style="color: #667eea;">Generating QR Code...</p>';
-            
-            // Create image element for online QR service
-            const img = document.createElement('img');
-            img.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&format=png&data=${encodeURIComponent(qrUrl)}`;
-            img.alt = 'QR Code for ' + equipmentId;
-            img.style.borderRadius = '12px';
-            img.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.1)';
-            img.style.maxWidth = '100%';
-            
-            img.onload = function() {
-                qrContainer.innerHTML = '';
-                qrContainer.appendChild(img);
-                
                 document.getElementById('qr-display').classList.remove('hidden');
                 document.getElementById('qr-equipment-id').textContent = equipmentId;
-                showStatus('QR Code generated successfully!', 'success');
+                showStatus('QR Code generated successfully using JS library!', 'success');
                 
                 currentEquipmentId = equipmentId;
-            };
-            
-            img.onerror = function() {
-                qrContainer.innerHTML = '<p style="color: #fc466b;">Failed to load QR code</p>';
-                showStatus('Failed to generate QR code using online service. Please try the JS Library method or check your internet connection.', 'error');
-            };
-        }
-
-        function generateLibraryQR(qrUrl, equipmentId) {
-            // Dynamic import of QR library
-            if (!window.QRCode) {
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-                script.onload = function() {
-                    console.log('QRCode library loaded successfully');
-                    generateWithLibrary(qrUrl, equipmentId);
-                };
-                script.onerror = function() {
-                    showStatus('Failed to load QR Code library. Please use Online QR method instead.', 'error');
-                };
-                document.head.appendChild(script);
-            } else {
-                generateWithLibrary(qrUrl, equipmentId);
             }
-        }
+        });
+    } catch (error) {
+        console.error('Library error:', error);
+        qrContainer.innerHTML = '<p style="color: #fc466b;">Library error occurred</p>';
+        showStatus('Library error. Please try the Online QR method.', 'error');
+    }
+}
 
-        function generateWithLibrary(qrUrl, equipmentId) {
-            const qrContainer = document.getElementById('qrcode');
-            qrContainer.innerHTML = '';
-            
-            try {
-                // Create canvas
-                const canvas = document.createElement('canvas');
-                qrContainer.appendChild(canvas);
-                
-                window.QRCode.toCanvas(canvas, qrUrl, {
-                    width: 300,
-                    height: 300,
-                    colorDark: '#2d3748',
-                    colorLight: '#ffffff',
-                    errorCorrectionLevel: 'H'
-                }, function (error) {
-                    if (error) {
-                        console.error('QR Generation Error:', error);
-                        qrContainer.innerHTML = '<p style="color: #fc466b;">Library QR generation failed</p>';
-                        showStatus('QR generation failed with library method. Try the Online QR method instead.', 'error');
-                    } else {
-                        document.getElementById('qr-display').classList.remove('hidden');
-                        document.getElementById('qr-equipment-id').textContent = equipmentId;
-                        showStatus('QR Code generated successfully using JS library!', 'success');
-                        
-                        currentEquipmentId = equipmentId;
-                    }
-                });
-            } catch (error) {
-                console.error('Library error:', error);
-                qrContainer.innerHTML = '<p style="color: #fc466b;">Library error occurred</p>';
-                showStatus('Library error. Please try the Online QR method.', 'error');
-            }
-        }
+function downloadQR() {
+    const qrContainer = document.getElementById('qrcode');
+    const canvas = qrContainer.querySelector('canvas');
+    const img = qrContainer.querySelector('img');
+    
+    if (canvas) {
+        // Download canvas QR code
+        const link = document.createElement('a');
+        link.download = `qr_${currentEquipmentId}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showStatus('QR Code downloaded successfully!', 'success');
+    } else if (img) {
+        // For online QR, create a new link
+        const link = document.createElement('a');
+        link.download = `qr_${currentEquipmentId}.png`;
+        link.href = img.src;
+        link.target = '_blank';
+        link.click();
+        showStatus('QR Code download initiated!', 'success');
+    } else {
+        showStatus('No QR code available to download', 'error');
+    }
+}
 
-        function downloadQR() {
-            const qrContainer = document.getElementById('qrcode');
-            const canvas = qrContainer.querySelector('canvas');
-            const img = qrContainer.querySelector('img');
-            
-            if (canvas) {
-                // Download canvas QR code
-                const link = document.createElement('a');
-                link.download = `qr_${currentEquipmentId}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                showStatus('QR Code downloaded successfully!', 'success');
-            } else if (img) {
-                // For online QR, create a new link
-                const link = document.createElement('a');
-                link.download = `qr_${currentEquipmentId}.png`;
-                link.href = img.src;
-                link.target = '_blank';
-                link.click();
-                showStatus('QR Code download initiated!', 'success');
-            } else {
-                showStatus('No QR code available to download', 'error');
-            }
-        }
+function showStatus(message, type) {
+    const statusDiv = document.getElementById('statusMessage');
+    let iconClass = '';
+    
+    if (type === 'loading') {
+        iconClass = '<div class="spinner"></div> ';
+    }
+    
+    statusDiv.innerHTML = `<div class="status-message status-${type}">${iconClass}${message}</div>`;
+    
+    if (type === 'success') {
+        setTimeout(() => {
+            statusDiv.innerHTML = '';
+        }, 5000);
+    } else if (type === 'error') {
+        setTimeout(() => {
+            statusDiv.innerHTML = '';
+        }, 10000);
+    }
+}
 
-        function showStatus(message, type) {
-            const statusDiv = document.getElementById('statusMessage');
-            let iconClass = '';
-            
-            if (type === 'loading') {
-                iconClass = '<div class="spinner"></div> ';
-            }
-            
-            statusDiv.innerHTML = `<div class="status-message status-${type}">${iconClass}${message}</div>`;
-            
-            if (type === 'success') {
-                setTimeout(() => {
-                    statusDiv.innerHTML = '';
-                }, 5000);
-            } else if (type === 'error') {
-                setTimeout(() => {
-                    statusDiv.innerHTML = '';
-                }, 10000);
-            }
-        }
-
-        // Function to obtain access token with caching
-        async function getAccessToken() {
-    const payload = new URLSearchParams({
-        grant_type: "client_credentials",
-        client_id: client_id,
-        client_secret: client_secret
-    });
-
+// Function to obtain access token - FIXED
+async function getAccessToken() {
     try {
         const response = await fetch(tokenurl, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
-            body: payload
+            body: JSON.stringify({
+                grant_type: "client_credentials",
+                client_id: client_id,
+                client_secret: client_secret
+            })
         });
 
         // Check if the response is OK (status code 200-299)
         if (!response.ok) {
-            const errorText = await response.text();  // Get the error message from the response
-            alert(`HTTP error! status: ${response.status}\nMessage: ${errorText}`);
+            const errorText = await response.text();
+            console.error(`HTTP error! status: ${response.status}\nMessage: ${errorText}`);
             throw new Error(`HTTP error! status: ${response.status}, Message: ${errorText}`);
         }
+        
         // Parse the JSON response and return the access token
         const data = await response.json();
-        return data.access_token;
+        console.log('Token response:', data);
+        
+        // Based on your API output, the token field is called 'token', not 'access_token'
+        return data.token || data.access_token;
     } catch (error) {
         console.error(`Error obtaining access token: ${error.message}`);
         return null;
     }
 }
 
+// Function to make API POST requests
+async function makeApiPostRequest(data) {
+    const token = await getAccessToken();
+    if (!token) {
+        console.error('Cannot make API call: no access token');
+        throw new Error('Failed to obtain access token');
+    }
 
-        // Function to make API POST requests
-        async function makeApiPostRequest(data) {
-            const token = await getAccessToken();
-            if (!token) {
-                console.error('Cannot make API call: no access token');
-                throw new Error('Failed to obtain access token');
-            }
+    try {
+        console.log('Making API POST request to:', endpoint);
+        console.log('Request data:', JSON.stringify(data, null, 2));
+        
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
 
-            try {
-                console.log('Making API POST request to:', endpoint);
-                console.log('Request data:', JSON.stringify(data, null, 2));
-                
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
+        console.log('API Response status:', response.status);
+        console.log('API Response headers:', [...response.headers.entries()]);
 
-                console.log('API Response status:', response.status);
-                console.log('API Response headers:', [...response.headers.entries()]);
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('API Error Response:', errorText);
-                    throw new Error(`API POST request failed: ${response.status} - ${errorText}`);
-                }
-
-                const result = await response.json();
-                console.log('API POST request successful:', result);
-                return result;
-                
-            } catch (error) {
-                console.error('API POST request error:', error.message);
-                throw error;
-            }
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error Response:', errorText);
+            throw new Error(`API POST request failed: ${response.status} - ${errorText}`);
         }
 
-        // Add interactive animations
-        document.addEventListener('DOMContentLoaded', function() {
-            const buttons = document.querySelectorAll('.btn, .action-btn:not(:disabled), .back-btn');
-            buttons.forEach(button => {
-                button.addEventListener('mouseenter', function() {
-                    if (!this.disabled) {
-                        this.style.transform = 'translateY(-2px) scale(1.02)';
-                    }
-                });
-                
-                button.addEventListener('mouseleave', function() {
-                    if (!this.disabled) {
-                        this.style.transform = 'translateY(0) scale(1)';
-                    }
-                });
-            });
+        const result = await response.json();
+        console.log('API POST request successful:', result);
+        return result;
+        
+    } catch (error) {
+        console.error('API POST request error:', error.message);
+        throw error;
+    }
+}
+
+// Add interactive animations
+document.addEventListener('DOMContentLoaded', function() {
+    const buttons = document.querySelectorAll('.btn, .action-btn:not(:disabled), .back-btn');
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            if (!this.disabled) {
+                this.style.transform = 'translateY(-2px) scale(1.02)';
+            }
         });
+        
+        button.addEventListener('mouseleave', function() {
+            if (!this.disabled) {
+                this.style.transform = 'translateY(0) scale(1)';
+            }
+        });
+    });
+});
     </script>
 </body>
 </html>
