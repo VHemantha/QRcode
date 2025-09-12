@@ -510,6 +510,7 @@ function disableActionButtons(disable) {
 }
 
 async function handleRepairAction() {
+    let result = null;
     try {
         const currentDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
         
@@ -529,7 +530,7 @@ async function handleRepairAction() {
         };
 
         console.log('Sending repair data:', apiData);
-        const result = await makeApiPostRequest(apiData);
+        result = await makeApiPostRequest(apiData);
         
         if (result) {
             showStatus(result, 'success');
@@ -549,6 +550,7 @@ async function handleRepairAction() {
 }
 
 async function handleTrainingAction() {
+    let result = null;
     try {
         const currentDate = new Date().toISOString().split('T')[0];
         
@@ -567,7 +569,7 @@ async function handleTrainingAction() {
         };
 
         console.log('Sending training data:', apiData);
-        const result = await makeApiPostRequest(apiData);
+        result = await makeApiPostRequest(apiData);
         
         if (result) {
             showStatus(result, 'success');
@@ -584,6 +586,7 @@ async function handleTrainingAction() {
 }
 
 async function handleMaintenanceAction() {
+    let result = null;
     try {
         const currentDate = new Date().toISOString().split('T')[0];
         
@@ -603,7 +606,7 @@ async function handleMaintenanceAction() {
         };
 
         console.log('Sending maintenance data:', apiData);
-        const result = await makeApiPostRequest(apiData);
+        result = await makeApiPostRequest(apiData);
         
         if (result) {
             showStatus(result, 'success');
