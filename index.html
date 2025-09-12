@@ -388,22 +388,22 @@
                 </div>
                 
                 <div class="action-options">
-                    <button class="action-btn repair" onclick="selectAction('repair')">
+                    <button class="action-btn repair" onclick="selectAction('repair')" id="repairBtn">
                         <div class="action-icon">🔧</div>
                         <div>Repair</div>
                     </button>
                     
-                    <button class="action-btn training" onclick="selectAction('training')">
+                    <button class="action-btn training" onclick="selectAction('training')" id="trainingBtn">
                         <div class="action-icon">📚</div>
                         <div>Training</div>
                     </button>
                     
-                    <button class="action-btn maintenance" onclick="selectAction('maintenance')">
+                    <button class="action-btn maintenance" onclick="selectAction('maintenance')" id="maintenanceBtn">
                         <div class="action-icon">⚙️</div>
                         <div>Maintenance</div>
                     </button>
                     
-                    <button class="action-btn status" onclick="selectAction('status')">
+                    <button class="action-btn status" onclick="selectAction('status')" id="statusBtn">
                         <div class="action-icon">📊</div>
                         <div>Status</div>
                     </button>
@@ -460,6 +460,7 @@ function checkUrlParams() {
 }
 
 function selectAction(action) {
+    const errorTex = ""
     const actionNames = {
         'repair': 'Repair',
         'training': 'Training',
@@ -477,18 +478,21 @@ function selectAction(action) {
     // Handle the action
     switch(action) {
         case 'repair':
-            handleRepairAction();
+            errorTex = handleRepairAction();
             break;
         case 'training':
-            handleTrainingAction();
+            errorTex = handleTrainingAction();
             break;
         case 'maintenance':
-            handleMaintenanceAction();
+            errorTex = handleMaintenanceAction();
             break;
         case 'status':
-            handleStatusAction();
+            errorTex = handleStatusAction();
             break;
     }
+
+    const errorMessage = document.getElementById('statusMessage');
+    errorMessage.innerHTML = errorTex;
 }
 
 function disableActionButtons(disable) {
@@ -512,6 +516,7 @@ async function handleRepairAction() {
         const apiData = {
             title: `Repair Request - Equipment ${currentEquipmentId}`,
             facilityID: currentEquipmentId,
+            assigneeId: "DRXOF47Y2I7SWOAVLYIOSMMXSVNFSVUD",
             issue: `Repair request submitted for equipment ${currentEquipmentId}`,
             priorityLevel: "High",
             reportedDate: currentDate,
@@ -535,9 +540,12 @@ async function handleRepairAction() {
     } catch (error) {
         console.error('Repair action error:', error);
         showStatus(`Failed to submit repair request: ${error.message}`, 'error');
+        return error;
     } finally {
         disableActionButtons(false);
     }
+
+    return result;
 }
 
 async function handleTrainingAction() {
@@ -547,6 +555,7 @@ async function handleTrainingAction() {
         const apiData = {
             title: `Training Request - Equipment ${currentEquipmentId}`,
             facilityID: currentEquipmentId,
+            assigneeId: "DRXOF47Y2I7SWOAVLYIOSMMXSVNFSVUD",
             issue: `Training materials requested for equipment ${currentEquipmentId}`,
             priorityLevel: "Medium",
             reportedDate: currentDate,
@@ -580,6 +589,7 @@ async function handleMaintenanceAction() {
         
         const apiData = {
             title: `Maintenance Request - Equipment ${currentEquipmentId}`,
+            assigneeId: "DRXOF47Y2I7SWOAVLYIOSMMXSVNFSVUD",
             facilityID: currentEquipmentId,
             issue: `Scheduled maintenance requested for equipment ${currentEquipmentId}`,
             priorityLevel: "Medium",
@@ -819,8 +829,10 @@ async function getAccessToken() {
         // Check if the response is OK (status code 200-299)
         if (!response.ok) {
             const errorText = await response.text();
+            return errorText
             console.error(`HTTP error! status: ${response.status}\nMessage: ${errorText}`);
             throw new Error(`HTTP error! status: ${response.status}, Message: ${errorText}`);
+
         }
         
         // Parse the JSON response and return the access token
@@ -831,7 +843,8 @@ async function getAccessToken() {
         return data.token || data.access_token;
     } catch (error) {
         console.error(`Error obtaining access token: ${error.message}`);
-        return null;
+        return error.message;
+
     }
 }
 
@@ -840,7 +853,9 @@ async function makeApiPostRequest(data) {
     const token = await getAccessToken();
     if (!token) {
         console.error('Cannot make API call: no access token');
+        return token;
         throw new Error('Failed to obtain access token');
+        
     }
 
     try {
@@ -863,6 +878,7 @@ async function makeApiPostRequest(data) {
         if (!response.ok) {
             const errorText = await response.text();
             console.error('API Error Response:', errorText);
+            return errorText;
             throw new Error(`API POST request failed: ${response.status} - ${errorText}`);
         }
 
@@ -872,6 +888,7 @@ async function makeApiPostRequest(data) {
         
     } catch (error) {
         console.error('API POST request error:', error.message);
+        return error.message;
         throw error;
     }
 }
