@@ -819,6 +819,7 @@ async function getAccessToken() {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
+            mode: 'cors',
             body: JSON.stringify({
                 grant_type: "client_credentials",
                 client_id: client_id,
@@ -827,13 +828,17 @@ async function getAccessToken() {
         });
 
         // Check if the response is OK (status code 200-299)
-        if (!response.ok) {
-            const errorText = await response.text();
-            return errorText
-            console.error(`HTTP error! status: ${response.status}\nMessage: ${errorText}`);
-            throw new Error(`HTTP error! status: ${response.status}, Message: ${errorText}`);
-
-        }
+        if (!response.ok) { 
+    let errorText;
+    try {
+        errorText = await response.text(); 
+    } catch (err) {
+        errorText = 'Unable to parse error message';
+    }
+    showStatus(`Token request failed: ${errorText}`, 'error');  
+    console.error(`HTTP error! status: ${response.status}\nMessage: ${errorText}`); 
+    return null; // return null instead of throwing
+}
         
         // Parse the JSON response and return the access token
         const data = await response.json();
@@ -850,13 +855,12 @@ async function getAccessToken() {
 
 // Function to make API POST requests
 async function makeApiPostRequest(data) {
-    const token = await getAccessToken();
-    if (!token) {
-        console.error('Cannot make API call: no access token');
-        return token;
-        throw new Error('Failed to obtain access token');
-        
-    }
+    const token = await getAccessToken(); 
+if (!token || typeof token !== 'string') { 
+    console.error('Cannot make API call: no valid access token'); 
+    showStatus('Failed to obtain access token. Check client credentials.', 'error');
+    return; 
+}
 
     try {
         console.log('Making API POST request to:', endpoint);
@@ -869,6 +873,7 @@ async function makeApiPostRequest(data) {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
+            mode: 'cors',
             body: JSON.stringify(data)
         });
 
