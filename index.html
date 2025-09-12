@@ -532,7 +532,7 @@ async function handleRepairAction() {
         const result = await makeApiPostRequest(apiData);
         
         if (result) {
-            showStatus('Repair request submitted successfully! Ticket created.', 'success');
+            showStatus(result, 'success');
             console.log('Repair API response:', result);
         } else {
             throw new Error('No response received from API');
@@ -570,7 +570,7 @@ async function handleTrainingAction() {
         const result = await makeApiPostRequest(apiData);
         
         if (result) {
-            showStatus('Training materials request submitted successfully!', 'success');
+            showStatus(result, 'success');
             console.log('Training API response:', result);
         } else {
             throw new Error('No response received from API');
@@ -606,7 +606,7 @@ async function handleMaintenanceAction() {
         const result = await makeApiPostRequest(apiData);
         
         if (result) {
-            showStatus('Maintenance request submitted successfully! Schedule created.', 'success');
+            showStatus(result, 'success');
             console.log('Maintenance API response:', result);
         } else {
             throw new Error('No response received from API');
@@ -640,7 +640,7 @@ async function handleStatusAction() {
         const result = await makeApiPostRequest(apiData);
         
         if (result) {
-            showStatus('Status check completed successfully! Dashboard updated.', 'success');
+            showStatus(result, 'success');
             console.log('Status API response:', result);
         } else {
             throw new Error('No response received from API');
